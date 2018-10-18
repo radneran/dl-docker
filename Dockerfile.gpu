@@ -40,7 +40,6 @@ RUN apt-get update && apt-get install -y \
 		libzmq3-dev \
 		nano \
 		pkg-config \
-		python-dev \
 		software-properties-common \
 		unzip \
 		vim \
@@ -88,9 +87,11 @@ RUN apt-get update && apt-get install -y \
 	update-alternatives --set libblas.so.3 /usr/lib/openblas-base/libblas.so.3
 
 # Install pip
+
 RUN curl -O https://bootstrap.pypa.io/get-pip.py && \
-	python get-pip.py && \
+	python3 get-pip.py && \
 	rm get-pip.py
+
 
 # Add SNI support to Python
 RUN pip3 --no-cache-dir install \
