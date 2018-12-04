@@ -1,0 +1,60 @@
+FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04
+
+# Upgrade packages
+RUN apt-get update && apt-get -y upgrade && apt-get -y dist-upgrade
+
+RUN apt-get install -y build-essential wget curl git
+
+# install python3.7
+
+RUN apt-get install -y zlibc zlib1g zlib1g-dev
+
+RUN apt-get install -y unzip vim \
+	software-properties-common \
+	pkg-config \
+	cmake \
+	bc \
+	libssl-dev openssl \
+	python3-dev
+	
+RUN apt-get install -y libffi-dev libncursesw5-dev libgdbm-dev libc6-dev \
+	libsqlite3-dev
+
+RUN wget https://www.python.org/ftp/python/3.7.1/Python-3.7.1.tar.xz && tar -xvf Python-3.7.1.tar.xz \
+	&& cd Python-3.7.1 && ./configure && make -j4 && make install && cd .. \
+	&& rm -r Python-3.*
+
+# install pip
+RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python3 get-pip.py && rm get-pip.py
+
+# install torch deps
+RUN pip3 install --no-cache-dir mkl mkl-include setuptools cffi typing
+
+# install tensorflow
+RUN pip3 install --no-cache-dir https://github.com/evdcush/TensorFlow-wheels/releases/download/tf-1.12.0-py37-gpu-10.0/tensorflow-1.12.0-cp37-cp37m-linux_x86_64.whl
+
+# install Keras
+RUN pip3 --no-cache-dir install Keras
+
+# install pytorch
+RUN wget http://vxlabs.com/downloads/torch-1.0.0a0+d02781a-cp37-cp37m-linux_x86_64.whl && pip3 --no-cache-dir install torch-1.0.0a0+d02781a-cp37-cp37m-linux_x86_64.whl && rm torch-1.0.0a0+d02781a-cp37-cp37m-linux_x86_64.whl
+RUN pip3 install --no-cache-dir torchvision
+
+# install Caffe
+RUN export DEBIAN_FRONTEND=noninteractive && apt-get -y install caffe-cuda
+
+# install jupyter and other libs
+RUN pip3 --no-cache-dir install jupyter \
+	jupyterlab \
+	scipy scapy
+
+# RUN pip3 --no-cache-dir install --upgrade incremental && apt-get install -y libbz2-dev \ 
+#	&& pip3 --no-cache-dir install Twisted && pip3 --no-cache-dir install scrapy
+
+# install opencv
+RUN apt-get -y install python3-opencv
+
+EXPOSE 6006 8888
+
+WORKDIR "/root"
+CMD ["/bin/bash"]

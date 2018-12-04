@@ -1,9 +1,9 @@
-FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04
+FROM nvidia/cuda:8.0-cudnn5-devel-ubuntu16.04
 
 # From  Sai Soundararaj <saip@outlook.com>
 
 ARG THEANO_VERSION=rel-0.8.2
-ARG TENSORFLOW_VERSION=1.12.0
+ARG TENSORFLOW_VERSION=1.11.0
 ARG TENSORFLOW_ARCH=gpu
 ARG KERAS_VERSION=1.2.0
 ARG LASAGNE_VERSION=v0.1
@@ -18,7 +18,7 @@ ARG PYTHON_VERSION=cp35-cp35m
 #	echo -e "\n\nBuilding your Deep Learning Docker Image...\n"
 
 # Install some dependencies
-RUN export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y \
 		bc \
 		build-essential \
 		cmake \
@@ -33,8 +33,8 @@ RUN export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -
 		liblcms2-dev \
 		libopenblas-dev \
 		liblapack-dev \
-#		libopenjpeg \
-		libpng-dev \
+		libopenjpeg5 \
+		libpng12-dev \
 		libssl-dev \
 		libtiff5-dev \
 		libwebp-dev \
@@ -53,7 +53,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -
 		libwebp-dev \
 		libpng-dev \
 		libtiff5-dev \
-		#libjasper-dev \
+		libjasper-dev \
 		libopenexr-dev \
 		libgdal-dev \
 		libdc1394-22-dev \
@@ -90,7 +90,6 @@ RUN export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -
 # Install pip
 
 RUN curl -O https://bootstrap.pypa.io/get-pip.py && \
-	python get-pip.py && \
 	python3 get-pip.py && \
 	rm get-pip.py
 
@@ -100,13 +99,6 @@ RUN pip3 --no-cache-dir install \
 		pyopenssl \
 		ndg-httpsclient \
 		pyasn1
-
-RUN pip --no-cache-dir install \
-		pyopenssl \
-		ndg-httpsclient \
-		pyasn1
-
-
 
 # Install useful Python packages using apt-get to avoid version incompatibilities with Tensorflow binary
 # especially numpy, scipy, skimage and sklearn (see https://github.com/tensorflow/tensorflow/issues/2034)
@@ -120,15 +112,6 @@ RUN apt-get update && apt-get install -y \
 		python3-pandas \
 		python3-sklearn \
 		python3-sympy \
-		python-numpy \
-		python-scipy \
-		python-nose \
-		python-h5py \
-		python-skimage \
-		python-matplotlib \
-		python-pandas \
-		python-sklearn \
-		python-sympy \
 		&& \
 	apt-get clean && \
 	apt-get autoremove && \
@@ -149,6 +132,23 @@ RUN pip3 install --ignore-installed -U ipython && \
 		zmq \
 		&& \
 	python3 -m ipykernel.kernelspec
+
+
+# Install TensorFlow
+RUN pip3 --no-cache-dir install \
+	https://storage.googleapis.com/tensorflow/linux/${TENSORFLOW_ARCH}/tensorflow_${TENSORFLOW_ARCH}-${TENSORFLOW_VERSION}-${PYTHON_VERSION}-linux_x86_64.whl
+
+
+# Install dependencies for Caffe
+RUN apt-get update && apt-get install -y \
+		libboost-all-dev \
+		libgflags-dev \
+		libgoogle-glog-dev \
+		libhdf5-serial-dev \
+		libleveldb-dev \
+		liblmdb-dev \
+		libopencv-dev \
+		libprotobuf-dev \
 
 RUN pip install --ignore-installed -U ipython && \
 	pip --no-cache-dir install \
@@ -248,40 +248,7 @@ RUN pip3 --no-cache-dir install --upgrade https://github.com/Lasagne/Lasagne/arc
 #	LD_LIBRARY_PATH=/root/torch/install/lib:$LD_LIBRARY_PATH \
 #	DYLD_LIBRARY_PATH=/root/torch/install/lib:$DYLD_LIBRARY_PATH
 #ENV LUA_CPATH='/root/torch/install/lib/?.so;'$LUA_CPATH
-#
-## Install the latest versions of nn, cutorch, cunn, cuDNN bindings and iTorch
-#RUN luarocks install nn && \
-#	luarocks install cutorch && \
-#	luarocks install cunn && \
-#    luarocks install loadcaffe && \
-#	\
-#	cd /root && git clone https://github.com/soumith/cudnn.torch.git && cd cudnn.torch && \
-#	git checkout R4 && \
-#	luarocks make && \
-#	\
-#	cd /root && git clone https://github.com/facebook/iTorch.git && \
-#	cd iTorch && \
-#	luarocks make
-
-# Install PyTorch
-# RUN cd /home/docker/
-# RUN virtualenv pytorch
-# RUN source pytorch/bin/activate 
-RUN pip3 --no-cache-dir install http://download.pytorch.org/whl/cu80/torch-0.4.1-${PYTHON_VERSION}-linux_x86_64.whl && \
-	pip3 --no-cache-dir install torchvision
-# RUN deactivate
-# Install OpenCV
-RUN git clone --depth 1 https://github.com/opencv/opencv.git /root/opencv && \
-	cd /root/opencv && \
-	mkdir build && \
-	cd build && \
-	cmake -DWITH_QT=ON -DWITH_OPENGL=ON -DFORCE_VTK=ON -DWITH_TBB=ON -DWITH_GDAL=ON -DWITH_XINE=ON -DBUILD_EXAMPLES=ON .. && \
-	make -j"$(nproc)"  && \
-	make install && \
-	ldconfig && \
-	echo 'ln /dev/null /dev/raw1394' >> ~/.bashrc
-
-RUN pip3 install jupyterlab && pip install jupyterlab
+RUN pip3 install jupyter && pip3 install jupyterlab
 # Set up notebook config
 # COPY jupyter_notebook_config.py /root/.jupyter/
 
